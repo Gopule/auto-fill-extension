@@ -2,14 +2,7 @@ chrome.runtime.onMessage.addListener(function (_request, _sender, sendResponse) 
   try {
     const body = document.querySelector("body")
     const stopButton = document.createElement('div');
-    stopButton.style.position = "sticky"
-    stopButton.style.top = "20px"
-    stopButton.style.backgroundColor = "red"
-    stopButton.style.width = "32px"
-    stopButton.style.height = "32px"
-    stopButton.style.left = "50%"
-    stopButton.style.borderRadius = "7px"
-    stopButton.style.cursor = "pointer"
+    enableStopButton(stopButton)
     document.body.insertBefore(stopButton, document.body.firstElementChild);
 
     const changedElements = new Set()
@@ -19,24 +12,10 @@ chrome.runtime.onMessage.addListener(function (_request, _sender, sendResponse) 
     })
 
     stopButton.addEventListener("click", () => {
-      const changes = {}
-
-      for (const element of changedElements) {
-        console.log("each element", element)
-        const indentifiers = ["id", "class", "name"]
-
-        for (const indentifier of indentifiers) {
-          const indentity = element.getAttribute(indentifier)
-
-          if (indentity) {
-            changes[indentifier] = {indentity: element.value}
-            break
-          }
-        }
-      }
-
-      console.log("changes", changes)
+      [ ...changedElements ].forEach(element => console.log(element, element.value)) //this is where the changed elements need to be stored
+      disableStopButton(stopButton)
     })
+
     // const tag = document.querySelectorAll("input")[0].value = request.value;
     sendResponse({ status: "Success!" });
   } catch (error) {
@@ -44,6 +23,27 @@ chrome.runtime.onMessage.addListener(function (_request, _sender, sendResponse) 
     sendResponse({ status: "Exception occurred!" });
   }
 });
+
+const enableStopButtonStyle = {
+  "position": "sticky",
+  "top": "20px",
+  "backgroundColor": "red",
+  "width": "32px",
+  "height": "32px",
+  "left": "50%",
+  "borderRadius": "7px",
+  "cursor": "pointer"
+}
+
+const enableStopButton = (stopButton) => {
+  for (const [key, value] of Object.entries(enableStopButtonStyle)) {
+    stopButton.style[key] = value
+  }
+}
+
+const disableStopButton = (stopButton) => {
+  stopButton.style.display = "none"
+}
 
 // position: sticky;
 // top: 20px;
