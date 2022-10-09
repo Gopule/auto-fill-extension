@@ -1,20 +1,46 @@
-chrome.runtime.onMessage.addListener(function (_request, _sender, sendResponse) {
+chrome.runtime.onMessage.addListener(function (
+  _request,
+  _sender,
+  sendResponse
+) {
   try {
-    const body = document.querySelector("body")
-    const stopButton = document.createElement('div');
-    enableStopButton(stopButton)
+    const currentUrl = window.location.href;
+    const body = document.querySelector("body");
+    const stopButton = document.createElement("div");
+    enableStopButton(stopButton);
     document.body.insertBefore(stopButton, document.body.firstElementChild);
 
-    const changedElements = new Set()
+    const changedElements = new Set();
 
     body.addEventListener("change", (event) => {
-      changedElements.add(event.target)
-    })
+      changedElements.add(event.target);
+    });
 
-    stopButton.addEventListener("click", () => {
-      [ ...changedElements ].forEach(element => console.log(element, element.value)) //this is where the changed elements need to be stored
-      disableStopButton(stopButton)
-    })
+    stopButton.addEventListener("click", async () => {
+      const tags = new Set();
+      changedElements.forEach((element) => tags.add(element.tagName));
+
+      const tagData = {};
+      tags.forEach((tag) => {
+        tagData[tag] = [];
+        document.querySelectorAll(`${tag}`).forEach((element, i) => {
+          if (changedElements.has(element)) {
+            const indexValue = {};
+            indexValue[i] = element.value;
+            tagData[tag].push(indexValue);
+          }
+        });
+      });
+
+      const data = {};
+      data[currentUrl] = tagData;
+
+      await chrome.storage.local.set(data);
+      disableStopButton(stopButton);
+
+      const result = await chrome.storage.local.get(currentUrl);
+      console.log(result);
+    });
 
     // const tag = document.querySelectorAll("input")[0].value = request.value;
     sendResponse({ status: "Success!" });
@@ -25,25 +51,33 @@ chrome.runtime.onMessage.addListener(function (_request, _sender, sendResponse) 
 });
 
 const enableStopButtonStyle = {
-  "position": "sticky",
-  "top": "20px",
-  "backgroundColor": "red",
-  "width": "32px",
-  "height": "32px",
-  "left": "50%",
-  "borderRadius": "7px",
-  "cursor": "pointer"
-}
+  position: "sticky",
+  top: "20px",
+  backgroundColor: "red",
+  width: "32px",
+  height: "32px",
+  left: "50%",
+  borderRadius: "7px",
+  cursor: "pointer",
+};
 
 const enableStopButton = (stopButton) => {
   for (const [key, value] of Object.entries(enableStopButtonStyle)) {
-    stopButton.style[key] = value
+    stopButton.style[key] = value;
   }
-}
+};
 
 const disableStopButton = (stopButton) => {
-  stopButton.style.display = "none"
-}
+  stopButton.style.display = "none";
+};
+
+// chrome.storage.sync.set({key: value}, function() {
+//   console.log('Value is set to ' + value);
+// });
+
+// chrome.storage.sync.get(['key'], function(result) {
+//   console.log('Value currently is ' + result.key);
+// });
 
 // position: sticky;
 // top: 20px;
@@ -111,7 +145,8 @@ const disableStopButton = (stopButton) => {
 //   console.log(borderContainer)
 //   return body
 // }
-{/* <div class="border-container">
+{
+  /* <div class="border-container">
   <div class="top-border">
     <div class="top-left-border"></div>
     <div class="top-right-border"></div>
@@ -120,4 +155,5 @@ const disableStopButton = (stopButton) => {
     <div class="bottom-left-border"></div>
     <div class="bottom-right-border"></div>
   </div>
-</div> */}
+</div> */
+}
